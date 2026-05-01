@@ -748,68 +748,130 @@ function submitRegister() {
   justify-content: center;
   width: 450px;
   height: 100%;
-  border-left: 1px solid var(--login-border);
-  box-shadow: var(--el-box-shadow-light);
+  border-left: 1px solid rgba(76, 211, 255, 0.22);
+  box-shadow:
+    -18px 0 40px rgba(0, 0, 0, 0.24),
+    inset 1px 0 0 rgba(255, 255, 255, 0.04);
+  backdrop-filter: blur(14px) saturate(125%);
+  -webkit-backdrop-filter: blur(14px) saturate(125%);
+  color: #ecfbff;
   @media (max-width: 1024px) {
     padding: 20px 18px;
     width: 384px;
     margin-left: 18px;
   }
   @media (max-width: 767px) {
-    border: 1px solid var(--login-border);
+    border: 1px solid rgba(76, 211, 255, 0.22);
     padding: 20px 18px;
-    border-radius: 6px;
+    border-radius: 12px;
     height: fit-content;
     width: 100%;
     margin-right: 18px;
     margin-left: 18px;
+    box-shadow:
+      0 18px 55px rgba(0, 0, 0, 0.38),
+      inset 0 0 0 1px rgba(255, 255, 255, 0.04);
   }
 
   .btn {
-    height: 36px;
+    height: 38px;
     width: 100%;
-    border-radius: 6px;
+    border-radius: 9px;
+    border: 1px solid rgba(79, 210, 255, 0.36) !important;
+    background:
+      linear-gradient(90deg, rgba(0, 203, 255, 0.94) 0%, rgba(0, 104, 255, 0.96) 100%) !important;
+    color: #ffffff !important;
+    box-shadow:
+      0 0 20px rgba(0, 145, 255, 0.32),
+      inset 0 1px 0 rgba(255, 255, 255, 0.26);
+    letter-spacing: 0.04em;
+    transition: transform 0.18s ease, filter 0.18s ease, box-shadow 0.18s ease;
+  }
+
+  .btn:hover {
+    filter: brightness(1.08);
+    transform: translateY(-1px);
+    box-shadow:
+      0 0 26px rgba(0, 180, 255, 0.42),
+      inset 0 1px 0 rgba(255, 255, 255, 0.30);
   }
 
   .form-desc {
     margin-top: 5px;
     margin-bottom: 18px;
-    color: var(--form-desc-color);
+    color: rgba(201, 235, 255, 0.74);
+    text-shadow: 0 0 12px rgba(0, 177, 255, 0.12);
   }
 
   .form-title {
     font-weight: bold;
     font-size: 22px !important;
+    color: #f2fbff;
+    text-shadow:
+      0 0 14px rgba(0, 183, 255, 0.18),
+      0 1px 2px rgba(0, 0, 0, 0.38);
   }
 
   .switch {
     margin-top: 20px;
     text-align: center;
+    color: rgba(219, 238, 255, 0.72);
 
     span {
-      color: var(--login-switch-color);
+      color: #34d7ff;
       cursor: pointer;
+      text-shadow: 0 0 12px rgba(0, 211, 255, 0.26);
+    }
+
+    span:hover {
+      color: #7ce7ff;
     }
   }
 
   :deep(.el-input__wrapper) {
-    border-radius: 6px;
-    background: var(--el-bg-color);
+    border-radius: 9px;
+    background: rgba(6, 14, 24, 0.72) !important;
+    box-shadow:
+      inset 0 0 0 1px rgba(117, 219, 255, 0.24),
+      0 0 18px rgba(0, 0, 0, 0.14) !important;
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    transition: box-shadow 0.18s ease, background 0.18s ease;
+  }
+
+  :deep(.el-input__wrapper:hover) {
+    background: rgba(8, 20, 34, 0.82) !important;
+    box-shadow:
+      inset 0 0 0 1px rgba(117, 219, 255, 0.36),
+      0 0 20px rgba(0, 183, 255, 0.10) !important;
+  }
+
+  :deep(.el-input__wrapper.is-focus) {
+    background: rgba(9, 24, 42, 0.90) !important;
+    box-shadow:
+      inset 0 0 0 1px rgba(65, 207, 255, 0.62),
+      0 0 22px rgba(0, 174, 255, 0.25) !important;
+  }
+
+  :deep(.el-input__inner) {
+    height: 36px;
+    color: #ecfbff !important;
+    caret-color: #45d8ff;
+  }
+
+  :deep(.el-input__inner::placeholder) {
+    color: rgba(213, 235, 255, 0.42) !important;
   }
 
   .email-input :deep(.el-input__wrapper) {
-    border-radius: 6px 0 0 6px;
-    background: var(--el-bg-color);
+    border-radius: 9px 0 0 9px;
+    background: rgba(6, 14, 24, 0.72) !important;
   }
 
   .el-input {
     height: 38px;
     width: 100%;
     margin-bottom: 18px;
-
-    :deep(.el-input__inner) {
-      height: 36px;
-    }
   }
 }
 
@@ -835,15 +897,31 @@ function submitRegister() {
 .setting-icon {
   position: relative;
   top: 6px;
+  color: #bff2ff;
 }
 
 
 :deep(.el-input-group__append) {
   padding: 0 !important;
-  padding-left: 8px !important;
-  padding-right: 4px !important;
-  background: var(--el-bg-color);
-  border-radius: 0 8px 8px 0;
+  padding-left: 10px !important;
+  padding-right: 6px !important;
+  background: rgba(10, 22, 36, 0.86) !important;
+  color: #ecfbff !important;
+  border-radius: 0 9px 9px 0;
+  border-left: 1px solid rgba(117, 219, 255, 0.20);
+  box-shadow:
+    inset 1px 0 0 rgba(255, 255, 255, 0.04),
+    inset 0 0 0 1px rgba(117, 219, 255, 0.18);
+}
+
+:deep(.el-input-group__append span),
+:deep(.el-input-group__append .iconify) {
+  color: #ecfbff !important;
+}
+
+:deep(.el-select .el-input__wrapper) {
+  background: transparent !important;
+  box-shadow: none !important;
 }
 
 :deep(.el-button+.el-button) {
@@ -906,6 +984,7 @@ function submitRegister() {
 
 #login-box {
   background: #000;
+  color-scheme: dark;
   font: 100% Arial, sans-serif;
   height: 100%;
   margin: 0;
