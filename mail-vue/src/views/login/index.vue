@@ -1,13 +1,10 @@
 <template>
   <div id="login-box" :style=" background ? 'background: var(--el-bg-color)' : ''" v-loading="oauthLoading" element-loading-text="登录中...">
-    <div id="background-wrap" v-if="!settingStore.settings.background">
-      <div class="x1 cloud"></div>
-      <div class="x2 cloud"></div>
-      <div class="x3 cloud"></div>
-      <div class="x4 cloud"></div>
-      <div class="x5 cloud"></div>
+    <div class="starfield-container">
+      <div ref="outerRef" class="starfield-outer">
+        <canvas ref="canvasRef" class="starfield-canvas"></canvas>
+      </div>
     </div>
-    <div v-else :style="background"></div>
     <div class="form-wrapper">
       <div class="container">
         <span class="form-title">{{ settingStore.settings.title }}</span>
@@ -140,15 +137,12 @@
         </el-button>
       </div>
     </el-dialog>
-    <a v-show="settingStore.settings.projectLink" class="github" href="https://github.com/maillab/cloud-mail">
-      <Icon icon="mingcute:github-line" color="#1890ff" width="20" height="20" />
-    </a>
   </div>
 </template>
 
 <script setup>
 import router from "@/router";
-import {computed, nextTick, reactive, ref} from "vue";
+import {computed, nextTick, onMounted, onUnmounted, reactive, ref} from "vue";
 import {login} from "@/request/login.js";
 import {register} from "@/request/login.js";
 import {isEmail} from "@/utils/verify-utils.js";
@@ -173,6 +167,173 @@ const bindLoading = ref(false)
 const oauthLoading = ref(false);
 const showBindForm = ref(false);
 const show = ref('login')
+
+const canvasRef = ref(null)
+const outerRef = ref(null)
+let starfieldRafId = null
+let starfieldResizeObserver = null
+
+onMounted(() => {
+  const canvas = canvasRef.value
+  const outer = outerRef.value
+  if (!canvas || !outer) return
+
+  const ctx = canvas.getContext('2d')
+  if (!ctx) return
+
+  const stars = []
+  let shootingStars = []
+  let drift = 0
+
+  const getDpr = () => Math.min(window.devicePixelRatio || 1, 2)
+  const getStarTarget = () => 750
+
+  const resizeCanvas = () => {
+    const rect = outer.getBoundingClientRect()
+    const dpr = getDpr()
+    canvas.width = Math.max(1, Math.floor(rect.width * dpr))
+    canvas.height = Math.max(1, Math.floor(rect.height * dpr))
+    canvas.style.width = rect.width + 'px'
+    canvas.style.height = rect.height + 'px'
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0)
+  }
+
+  const seedStars = (count, initialVisible) => {
+    const dpr = getDpr()
+    const logicalW = canvas.width / dpr
+    const logicalH = canvas.height / dpr
+
+    for (let n = 0; n < count; n++) {
+      const angle = Math.random() * Math.PI * 2
+      const distance = Math.random() * Math.max(logicalW, logicalH) * 2 + 500
+
+      stars.push({
+        x: 0,
+        y: 0,
+        radius: Math.random() + 0.5,
+        opacity: initialVisible ? 0.5 * Math.random() + 0.5 : 0,
+        twinkleSpeed: 1e-4 + 0.01 * Math.random(),
+        angle,
+        distance
+      })
+    }
+  }
+
+  resizeCanvas()
+  seedStars(getStarTarget(), true)
+
+  starfieldResizeObserver = new ResizeObserver(() => {
+    resizeCanvas()
+  })
+  starfieldResizeObserver.observe(outer)
+
+  const frame = () => {
+    const dpr = getDpr()
+    const w = canvas.width / dpr
+    const h = canvas.height / dpr
+
+    ctx.clearRect(0, 0, w, h)
+
+    const starTarget = getStarTarget()
+    if (stars.length < starTarget) {
+      seedStars(1, false)
+    }
+
+    drift += 1e-4
+
+    const originX = w + 0.1 * h
+    const originY = h + 0.5 * h
+
+    for (const star of stars) {
+      const angle = star.angle + drift
+      star.x = originX + Math.cos(angle) * star.distance
+      star.y = originY + Math.sin(angle) * star.distance
+      star.opacity += star.twinkleSpeed
+
+      if (star.opacity > 1 || star.opacity < 0.6) {
+        star.twinkleSpeed = -star.twinkleSpeed
+      }
+
+      const gradient = ctx.createRadialGradient(
+        star.x, star.y, 0,
+        star.x, star.y, 2 * star.radius
+      )
+      gradient.addColorStop(0, `rgba(255, 255, 255, ${star.opacity})`)
+      gradient.addColorStop(0.5, `rgba(255, 255, 255, ${0.5 * star.opacity})`)
+      gradient.addColorStop(1, 'rgba(255, 255, 255, 0)')
+
+      ctx.beginPath()
+      ctx.arc(star.x, star.y, 2 * star.radius, 0, 2 * Math.PI)
+      ctx.fillStyle = gradient
+      ctx.fill()
+    }
+
+    if (Math.random() < 0.001 && shootingStars.length < 3) {
+      shootingStars.push({
+        x: Math.random() * w,
+        y: -50,
+        length: 120 + 120 * Math.random(),
+        speed: 3 + Math.random(),
+        opacity: 0.9
+      })
+    }
+
+    shootingStars = shootingStars.filter((meteor) => {
+      meteor.x -= meteor.speed
+      meteor.y += meteor.speed
+      meteor.opacity -= 0.01
+
+      const tail = ctx.createLinearGradient(
+        meteor.x,
+        meteor.y,
+        meteor.x + 0.707 * meteor.length,
+        meteor.y - 0.707 * meteor.length
+      )
+      tail.addColorStop(0, `rgba(255, 255, 255, ${meteor.opacity})`)
+      tail.addColorStop(0.5, `rgba(255, 255, 255, ${0.5 * meteor.opacity})`)
+      tail.addColorStop(1, 'rgba(255, 255, 255, 0)')
+
+      ctx.beginPath()
+      ctx.moveTo(meteor.x, meteor.y)
+      ctx.lineTo(
+        meteor.x + 0.707 * meteor.length,
+        meteor.y - 0.707 * meteor.length
+      )
+      ctx.strokeStyle = tail
+      ctx.lineWidth = 2
+      ctx.stroke()
+
+      const head = ctx.createRadialGradient(
+        meteor.x, meteor.y, 0,
+        meteor.x, meteor.y, 4
+      )
+      head.addColorStop(0, `rgba(255, 255, 255, ${meteor.opacity})`)
+      head.addColorStop(1, 'rgba(255, 255, 255, 0)')
+
+      ctx.beginPath()
+      ctx.arc(meteor.x, meteor.y, 4, 0, 2 * Math.PI)
+      ctx.fillStyle = head
+      ctx.fill()
+
+      return meteor.y < h + 50 && meteor.opacity > 0
+    })
+
+    starfieldRafId = window.requestAnimationFrame(frame)
+  }
+
+  frame()
+})
+
+onUnmounted(() => {
+  if (starfieldResizeObserver) {
+    starfieldResizeObserver.disconnect()
+    starfieldResizeObserver = null
+  }
+  if (starfieldRafId) {
+    window.cancelAnimationFrame(starfieldRafId)
+    starfieldRafId = null
+  }
+})
 
 const bindForm = reactive({
   email: '',
@@ -676,22 +837,6 @@ function submitRegister() {
   top: 6px;
 }
 
-.github {
-  position: fixed;
-  width: 35px;
-  height: 35px;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  border-radius: 50%;
-  background: var(--el-bg-color);
-  bottom: 10px;
-  right: 10px;
-  z-index: 1000;
-  border: 1px solid var(--el-border-color-light);
-  box-shadow: var(--el-box-shadow-light);
-  cursor: pointer;
-}
 
 :deep(.el-input-group__append) {
   padding: 0 !important;
@@ -727,8 +872,40 @@ function submitRegister() {
 }
 
 
+
+.starfield-container {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  user-select: none;
+  animation: starfieldFadeIn 5s ease-out forwards;
+  background: #000;
+}
+
+@keyframes starfieldFadeIn {
+  0% {
+    opacity: 0;
+  }
+
+  100% {
+    opacity: 1;
+  }
+}
+
+.starfield-outer {
+  width: 100%;
+  height: 100%;
+}
+
+.starfield-canvas {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
 #login-box {
-  background: linear-gradient(to bottom, #2980b9, #6dd5fa, #fff);
+  background: #000;
   font: 100% Arial, sans-serif;
   height: 100%;
   margin: 0;
